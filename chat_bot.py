@@ -1,6 +1,8 @@
 import os
-from datetime import datetime, timedelta
-
+import sqlite3
+import asyncio
+import logging
+from datetime                   import datetime, timedelta
 from aiogram                    import Bot, Dispatcher, types
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.context        import FSMContext
@@ -10,66 +12,57 @@ from aiogram.types              import BotCommand
 from aiogram.client.default     import DefaultBotProperties
 from aiogram.enums              import ParseMode
 
-
-import sqlite3
-import asyncio
-import logging
-
-# Настройки логирования
+#Установка и настройка логирования
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Токен для Telegram API
-ACCESS_TOKEN = "7834222412:AAEid2-JgISz0VS6xD9QONh_F9kdWNfSo9M"
 
-
-class SchedulerBot:
+class ScheduleBot:
     def __init__(self, token):
         self.bot = Bot(
-            token = token,#ACCESS_TOKEN,
+            token = token,
             default = DefaultBotProperties(parse_mode=ParseMode.HTML)
         )
         self.bot_storage = MemoryStorage()
-        self.bot_dispatcher = Dispatcher()
+        self.bot_dispatcher = Dispatcher(storage=self.bot_storage)
         self.setup_handlers()
 
-    # Настройка FSM
+
     class AddEvent(StatesGroup):
         waiting_for_event_name = State()
         waiting_for_event_date = State()
         waiting_for_event_time = State()
 
-    # Настройка бота
+
     def setup_handlers(self):
-        self.bot_dispatcher.message.register(self.command_start, Command("start"))
-        self.bot_dispatcher.message.register(self.command_help, Command("help"))
+        self.bot_dispatcher.message.register(self.command_start,    Command("start"))
+        self.bot_dispatcher.message.register(self.command_help,     Command("help"))
         self.bot_dispatcher.message.register(self.command_schedule, Command("schedule"))
-        self.bot_dispatcher.message.register(self.command_today, Command("today"))
+        self.bot_dispatcher.message.register(self.command_today,    Command("today"))
         self.bot_dispatcher.message.register(self.command_tomorrow, Command("tomorrow"))
-        self.bot_dispatcher.message.register(self.command_week, Command("week"))
-        self.bot_dispatcher.message.register(self.command_add, Command("add"))
+        self.bot_dispatcher.message.register(self.command_week,     Command("week"))
+        self.bot_dispatcher.message.register(self.command_add,      Command("add"))
         self.bot_dispatcher.message.register(self.proccess_event_name, self.AddEvent.waiting_for_event_name)
         self.bot_dispatcher.message.register(self.proccess_event_date, self.AddEvent.waiting_for_event_date)
         self.bot_dispatcher.message.register(self.proccess_event_time, self.AddEvent.waiting_for_event_time)
-        #Уведомление о событиях
+
 
     async def set_commands(self):
         command_list = [
-            BotCommand(command="/start", description="Начало работы"),
-            BotCommand(command="/help", description="Помощь"),
-            BotCommand(command="/today", description="Расписание на сегодня"),
+            BotCommand(command="/start",    description="Начало работы"),
+            BotCommand(command="/help",     description="Помощь"),
+            BotCommand(command="/today",    description="Расписание на сегодня"),
             BotCommand(command="/tomorrow", description="Расписание на завтра"),
-            BotCommand(command="/week", description="Расписание на неделю"),
-            BotCommand(command="/add", description="Добавить событие"),
+            BotCommand(command="/week",     description="Расписание на неделю"),
+            BotCommand(command="/add",      description="Добавить событие"),
             BotCommand(command="/schedule", description="Инструкция"),
         ]
         await self.bot.set_my_commands(command_list)
 
+
     async def command_start(self, message : types.message):
         """
-
-        :param message:
-        :return:
+        Обработчик команды /start - приветственное сообщение
         """
         await message.answer(
             "Привет! Я бот-планировщик для студентов и преподавателей.\n"
@@ -77,53 +70,47 @@ class SchedulerBot:
             "Используйте /help для списка команд"
         )
 
+
     async def command_help(self, message: types.message):
         """
-
-        :param message:
-        :return:
+        Обработчик команды /help - показывает доступные команды
         """
         help_message = (
-            "Доступные команды:\n\n"
-            "Расписание:\n"
+            "<b>Доступные команды:</b>\n\n"
+            "📅 <b>Расписание:</b>\n"
             "/today - Занятия на сегодня\n"
             "/tomorrow - Занятия на завтра\n"
             "/week - Занятия на неделю\n\n"
-            "Добавление событий:\n"
+            "🆕 <b>Добавление событий:</b>\n"
             "/add - Добавить новое событие\n"
             "/schedule - Как добавить событие\n\n"
-            "Напоминания:\n"
+            "🔔 <b>Напоминания:</b>\n"
             "Автоматически за 1 час до события\n"
-            "Конец"
         )
         await message.answer(help_message)
 
+
     async def command_schedule(self, message : types.message):
         """
-
-        :param message:
-        :return:
+        Обработчик команды /schedule - инструкция для добавления события
         """
+        now = datetime.now()
+        today = now.strftime("%Y-%m-%d")
         schedule_info = (
             "Как добавить событие:\n"
-            "1. Быстрый способ:\n"
-            "\n/add название 2025-07-13 18:00\n"
-            "2. Пошаговый способ:\n"
-            "Отправьте команду /add и следуйте инструкциям\n\n"
-            "Пример:\n"
-            "/add deadline по тз 2025-07-14 10:00\n"
+            "<b>1. Быстрый способ:</b>\n"
+            f"  /add название {today} 18:00\n\n"
+            "<b>2. Пошаговый способ:</b>\n"
+            "  Отправьте команду /add и следуйте инструкциям\n\n"
+            "<i>Пример:</i>\n"
+            f"/add Олимпиада {today} 10:00\n"
         )
         await message.answer(schedule_info)
-
-
-
 
 
     async def command_today(self, message : types.message):
         """
         Обработчик команды /today - показывает события на сегодня
-        :param message:
-        :return:
         """
         now = datetime.now()
         today = now.strftime("%Y-%m-%d")
@@ -163,15 +150,13 @@ class SchedulerBot:
     async def command_tomorrow(self, message : types.message):
         """
         Обработчик команды /tomorrow - показывает события на завтра
-        :param message:
-        :return:
         """
         tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
         events = self.get_events_for_date(message.from_user.id, tomorrow)
         if events:
             response = "<b>🗓  Расписание на завтра</b>\n\n"
             for event in events:
-                response += f"XX {event[4]} — {event[2]}\n"
+                response += f"⏳ {event[4]} — {event[2]}\n"
         else:
             await message.answer("Нет запланированных событий на завтра")
             return
@@ -182,8 +167,6 @@ class SchedulerBot:
     async def command_week(self, message : types.message):
         """
         Обработчик команды /week - показывает события на неделю
-        :param message:
-        :return:
         """
         start_date = datetime.now()
         end_date = start_date + timedelta(days=7)
@@ -199,28 +182,26 @@ class SchedulerBot:
             event_date = event[3]
             if event_date != current_date:
                 current_date = event_date
-                if not first_day:
-                    response += "\n"
-                else:
-                    first_day = False
+                # if not first_day:
+                #     response += "\n"
+                # else:
+                #     first_day = False
                 response += f"<b>\n{current_date}:</b>\n"
-            response += f"X {event[4]} — {event[2]}"
+            response += f"⏳ {event[4]} — {event[2]}\n"
 
         await message.answer(response)
 
 
     async def command_add(self, message : types.message, state : FSMContext):
         """
-
-        :param message:
-        :return:
+        Обработчик команды /add - добавление события
         """
         add_args = message.text.split()[1:]
         if len(add_args) >= 3:
             try:
                 event_name = ' '.join(add_args[:-2])
                 event_date = add_args[-2]
-                event_time = add_args[-1]
+                event_time = self.normalize_time(add_args[-1])
                 datetime.strptime(event_date, '%Y-%m-%d')
                 datetime.strptime(event_time, '%H:%M')
 
@@ -238,9 +219,11 @@ class SchedulerBot:
         await message.answer("Введите название события:")
 
 
-    # Настройка БД
     @staticmethod
     def init_db():
+        """
+        Инициализация базы данных
+        """
         db_connection = sqlite3.connect("Schedule.db")
         cursor = db_connection.cursor()
         cursor.execute('''
@@ -258,14 +241,9 @@ class SchedulerBot:
 
 
     def save_event(self, user_id: int, event_name: str, event_date: str, event_time: str):
-        '''
-
-        :param user_id:
-        :param event_name:
-        :param event_date:
-        :param event_time:
-        :return:
-        '''
+        """
+        Сохранение события
+        """
         db_connection = sqlite3.connect("Schedule.db")
         cursor = db_connection.cursor()
 
@@ -277,59 +255,56 @@ class SchedulerBot:
         db_connection.close()
 
 
-#-----------------------------------------------------------------------------------------------------------------------
-
     async def check_reminders(self):
         now = datetime.now()
+        reminder_time = now + timedelta(hours=1)
+
         db_connection = sqlite3.connect('schedule.db')
         cursor = db_connection.cursor()
 
-        # Получаем все события, которые:
-        # 1. Еще не были напомнены (reminded = 0)
-        # 2. Должны начаться в ближайшие 1 час 10 минут
         cursor.execute('''
         SELECT * FROM schedule_table 
         WHERE reminded = 0 
-        AND event_date = ?
+        AND event_date = ? 
         AND event_time BETWEEN ? AND ?
-        ORDER BY event_time
-        ''', (
-            now.strftime('%Y-%m-%d'),
-            now.strftime('%H:%M'),
-            (now + timedelta(minutes=70)).strftime('%H:%M')  # +1ч10мин
-        ))
+        ''', (now.strftime('%Y-%m-%d'),
+              now.strftime('%H:%M'),
+              reminder_time.strftime('%H:%M')))
 
         for event in cursor.fetchall():
-            event_time = datetime.strptime(event[4], '%H:%M').time()
-            time_diff = (datetime.combine(now.date(), event_time) - now).total_seconds() / 60
-
-            if 60 >= time_diff > 10:  # Напоминание за 1 час
-                await self.send_reminder(event,"планируемое событие - ")
+            try:
+                await self.bot.send_message(
+                    event[1],
+                    f"🔔 <b>Напоминание:</b>\nЧерез час событие '{event[2]}' в {event[4]}"
+                )
                 cursor.execute('UPDATE schedule_table SET reminded = 1 WHERE id = ?', (event[0],))
+                db_connection.commit()
+            except Exception as e:
+                logger.error(f"Ошибка напоминания: {e}")
 
-            elif 10 >= time_diff > 0:  # Напоминание за 10 минут
-                await self.send_reminder(event,"планируемое событие - ")
-                cursor.execute('UPDATE schedule_table SET reminded = 1 WHERE id = ?', (event[0],))
-
-        db_connection.commit()
         db_connection.close()
 
-    async def send_reminder(self, event, time_left):
+
+    def normalize_time(self, time_str: str) -> str:
+        """
+        Функция для нормализации времени
+        """
         try:
-            await self.bot.send_message(
-                event[1],
-                f"<b>Напоминание:</b>\n{time_left} '{event[2]}' в {event[4]}"
-            )
-        except Exception as e:
-            logger.error(f"Ошибка отправки напоминания: {e}")
+            if ":" in time_str:
+                hours, minutes = time_str.split(":")
+            else:
+                raise ValueError("❌ Некорректный формат времени")
+
+            normalized = f"{int(hours):02d}:{int(minutes):02d}"
+            datetime.strptime(normalized, "%H:%M")
+            return normalized
+        except (ValueError, AttributeError) as e:
+            raise ValueError(f"❌ Некорректный формат времени: {time_str}") from e
 
 
     def get_events_for_date(self, user_id : int, date : str) -> list:
         """
         Получает события пользователя на конкретную дату
-        :param user_id:
-        :param date:
-        :return:
         """
         db_connection = sqlite3.connect("Schedule.db")
         cursor = db_connection.cursor()
@@ -345,12 +320,10 @@ class SchedulerBot:
 
         return events
 
+
     def get_events_for_period(self, user_id : int, date_start : str, date_end : str) -> list:
         """
         Получает события пользователя за период
-        :param user_id:
-        :param date:
-        :return:
         """
         db_connection = sqlite3.connect("Schedule.db")
         cursor = db_connection.cursor()
@@ -366,12 +339,10 @@ class SchedulerBot:
 
         return events
 
+
     async def proccess_event_name(self, message : types.Message, state : FSMContext):
         """
-        Обработчик состояния - получения названия события
-        :param message:
-        :param state:
-        :return:
+        обработчик состояния - получения названия события
         """
         current_date = datetime.now().strftime("%Y-%m-%d")
         if len(message.text) > 100:
@@ -379,14 +350,12 @@ class SchedulerBot:
             return
         await state.update_data(event_name = message.text)
         await state.set_state(self.AddEvent.waiting_for_event_date)
-        await message.answer(f"X Введите дату события в формате <b>ГГГГ-ММ-ДД</b> (например, {current_date}):")
+        await message.answer(f"🗓 Введите дату события в формате <b>ГГГГ-ММ-ДД</b> (например, {current_date}):")
+
 
     async def proccess_event_date(self, message : types.Message, state : FSMContext):
         """
-        Обработчик состояния - получения даты события
-        :param message:
-        :param state:
-        :return:
+        обработчик состояния - получения даты события
         """
         try:
             datetime.strptime(message.text, "%Y-%m-%d")
@@ -399,20 +368,18 @@ class SchedulerBot:
 
     async def proccess_event_time(self, message : types.Message, state : FSMContext):
         """
-        Обработчик состояния - получения времени события
-        :param message:
-        :param state:
-        :return:
+        обработчик состояния - получения времени события
         """
         try:
             datetime.strptime(message.text, "%H:%M")
             data = await state.get_data()
+            normalize_time = self.normalize_time(message.text)
 
             self.save_event(
                 user_id=message.from_user.id,
                 event_name=data["event_name"],
                 event_date=data["event_date"],
-                event_time=message.text
+                event_time=normalize_time
             )
 
             await message.answer(
@@ -423,14 +390,12 @@ class SchedulerBot:
             await state.clear()
 
         except ValueError:
-            await message.answer("Неверный формат времени. Используйте <b>ЧЧ:ММ</b>")
+            await message.answer("❌ Неверный формат времени. Используйте <b>ЧЧ:ММ</b>")
+
 
     def calc_time_left(self, now : datetime, event_time : str) -> str:
         """
-
-        :param now:
-        :param event_time:
-        :return:
+        Форматирование времени
         """
         event_datetime = datetime.strptime(event_time, "%H:%M")
         delta = timedelta(hours=event_datetime.hour - now.hour, minutes=event_datetime.minute - now.minute)
@@ -446,6 +411,9 @@ class SchedulerBot:
 
 
     async def run(self):
+        """
+        Основной метод запуска бота
+        """
         self.init_db()
         await self.set_commands()
 
@@ -458,7 +426,8 @@ class SchedulerBot:
         await self.bot_dispatcher.start_polling(self.bot)
 
 
+ACCESS_TOKEN = "7834222412:AAEid2-JgISz0VS6xD9QONh_F9kdWNfSo9M"
 
 if __name__ == "__main__":
-    bot = SchedulerBot(ACCESS_TOKEN)
+    bot = ScheduleBot(ACCESS_TOKEN)
     asyncio.run(bot.run())
