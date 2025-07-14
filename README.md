@@ -40,21 +40,38 @@ sudo apt install python3 python3-pip python3-venv
 # macOS 
 brew install python
 ```
+### 2. Установка Git
 
-### 2. Установка зависимостей
-```bash
-pip install aiogram
-pip install sqlite3
-```
+#### Windows
+1. Скачайте установщик [официальный сайт Git](https://git-scm.com/downloads)
+2. Запустите установщик
+3. Проверка установки `git --version`
+
+
+#### Linux (Ubuntu/Debian)
+1. Обновите пакеты:`sudo apt update`
+2. Установите Git:`sudo apt install git`
+3. Проверка установки:`git --version`
+   
+#### macOS
+`brew install git`
 
 ### 3. Клонирование репозитория 
 ```bash
 git clone https://github.com/flitchendly/ScheduleBot.git
 cd ScheduleBot
 ```
-### 4. Запуск
+
+### 4. Установка окружения
+`python -m venv venv`
+
+### 5. Установка зависимостей
+```bash
+pip install aiogram
+```
+
+### 6. Запуск
 ```bash
 python chatbot.py
 ```
-
 
