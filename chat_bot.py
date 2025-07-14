@@ -419,7 +419,7 @@ class ScheduleBot:
 
         async def scheduler():
             while True:
-                await self.check_reminders() #расчет оставшегося времени до посылки уведомления
+                await self.check_reminders()
                 await asyncio.sleep(60)
 
         asyncio.create_task(scheduler())
