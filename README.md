@@ -1,4 +1,4 @@
- ScheduleBot
+# ScheduleBot
 Реализация чат-бота в рамках выполнения проекта второго отборочного этапа в Сириус.
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
@@ -79,7 +79,10 @@ cd ScheduleBot
 
 ### 4. Установка окружения
 ```bash
-python -m venv venv
+python -m venv venv 
+
+# Linux/macOS
+source venv/bin/activate
 ```
 
 ### 5. Установка зависимостей
@@ -87,7 +90,20 @@ python -m venv venv
 pip install aiogram
 ```
 
-### 6. Запуск
+### 6. Запуск бота
 ```bash
 python chat_bot.py
 ```
+
+## Пример использования
+### Добавление события
+```bash
+/add Олимпиада 2025-07-14 10:00
+```
+### Просмотр расписания
+```bash
+/today
+```
+Пример вывода расписания:
+
+![today](https://github.com/flitchendly/ScheduleBot/blob/main/examples/command_today.png)
