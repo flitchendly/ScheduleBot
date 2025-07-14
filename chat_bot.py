@@ -176,16 +176,11 @@ class ScheduleBot:
             return
         response = "<b>🗓  Расписание на неделю</b>\n"
         current_date = None
-        first_day = True
 
         for event in sorted(events, key=lambda x:(x[3], x[4])):
             event_date = event[3]
             if event_date != current_date:
                 current_date = event_date
-                # if not first_day:
-                #     response += "\n"
-                # else:
-                #     first_day = False
                 response += f"<b>\n{current_date}:</b>\n"
             response += f"⏳ {event[4]} — {event[2]}\n"
 
@@ -259,7 +254,7 @@ class ScheduleBot:
         now = datetime.now()
         reminder_time = now + timedelta(hours=1)
 
-        db_connection = sqlite3.connect('schedule.db')
+        db_connection = sqlite3.connect('Schedule.db')
         cursor = db_connection.cursor()
 
         cursor.execute('''
