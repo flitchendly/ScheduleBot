@@ -106,8 +106,8 @@ python chat_bot.py
 ```
 Пример вывода расписания:
 
-![today](https://github.com/flitchendly/ScheduleBot/blob/main/examples/command_today.png)
+![today](examples/command_today.png)
 
 Пример получения уведомления за час до события:
 
-![event](https://github.com/flitchendly/ScheduleBot/blob/main/examples/event.png)
+![event](examples/event.png)
