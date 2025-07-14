@@ -89,5 +89,5 @@ pip install aiogram
 
 ### 6. Запуск
 ```bash
-python chatbot.py
+python chat_bot.py
 ```
