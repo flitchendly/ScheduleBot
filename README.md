@@ -1,4 +1,4 @@
-# ScheduleBot
+ ScheduleBot
 Реализация чат-бота в рамках выполнения проекта второго отборочного этапа в Сириус.
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
@@ -45,16 +45,31 @@ brew install python
 #### Windows
 1. Скачайте установщик [официальный сайт Git](https://git-scm.com/downloads)
 2. Запустите установщик
-3. Проверка установки `git --version`
-
+3. Проверка установки 
+```bash
+git --version
+```
 
 #### Linux (Ubuntu/Debian)
-1. Обновите пакеты:`sudo apt update`
-2. Установите Git:`sudo apt install git`
-3. Проверка установки:`git --version`
-   
+1. Обновите пакеты:
+```bash
+sudo apt update
+```
+
+2. Установите Git:
+```bash
+sudo apt install git
+```
+
+3. Проверка установки:
+```bash
+git --version
+```
+
 #### macOS
-`brew install git`
+```bash
+brew install git
+```
 
 ### 3. Клонирование репозитория 
 ```bash
@@ -63,7 +78,9 @@ cd ScheduleBot
 ```
 
 ### 4. Установка окружения
-`python -m venv venv`
+```bash
+python -m venv venv
+```
 
 ### 5. Установка зависимостей
 ```bash
@@ -74,4 +91,3 @@ pip install aiogram
 ```bash
 python chatbot.py
 ```
-
